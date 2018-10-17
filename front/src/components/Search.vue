@@ -4,9 +4,11 @@
             v-model="input"
             placeholder="请输入查询"></el-input>
 
-        <div class="content-wrap">
-            <Article v-for="article in articles"
-             v-bind:article="article" :key=article.title></Article>            
+            <div class="content-wrap" v-if="articlesSize > 0">
+              <div class="hint-wrap">
+                <el-alert type="success" v-bind:title="hint" :closable="false"></el-alert>
+              </div>
+              <Article v-for="article in articles" v-bind:article="article" :key=article.id></Article>
         </div>
     </div>
 </template>
@@ -22,13 +24,19 @@ export default {
     };
   },
   computed: {
+    hint() {
+      return `共搜索到 ${this.articlesSize} 条结果`
+    },
+    articlesSize() {
+      return this.$store.state.articles.results.length;
+    },
     ...mapState({
       articles: state => state.articles.results
     })
   },
   watch: {
     input: function(val) {
-      this.$store.dispatch("articles/searchResults");
+      this.$store.dispatch("articles/searchResults", val);
     }
   },
   components: {
@@ -40,5 +48,9 @@ export default {
 <style scoped>
 .search-wrap {
   padding: 2rem;
+}
+
+.hint-wrap {
+  margin: 2rem auto;
 }
 </style>

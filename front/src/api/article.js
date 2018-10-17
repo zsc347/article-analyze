@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const articles = [
   {
     title: "行宫",
@@ -12,10 +14,14 @@ const articles = [
   }
 ];
 
+const client = axios.create();
+
 export default {
-  searchArticles(keyword) {
-    let rs = [articles[Math.floor(Math.random() * 2)]];
-    console.log("searching articles", rs);
-    return Promise.resolve(rs);
+  searchArticles(query) {
+    return client.get("/api/search", {
+      params: {
+        query: query
+      }
+    });
   }
 };

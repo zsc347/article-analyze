@@ -3,7 +3,7 @@ package com.scaiz.analyze;
 import com.scaiz.analyze.manager.DBManager;
 import com.scaiz.analyze.parser.Parser;
 import com.scaiz.analyze.pojo.Article;
-import com.scaiz.analyze.service.ArticleSearchService;
+import com.scaiz.analyze.service.SearchService;
 import io.netty.util.internal.StringUtil;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import javax.management.DynamicMBean;
 
 public class ArticleVerticle extends AbstractVerticle {
 
@@ -40,7 +39,7 @@ public class ArticleVerticle extends AbstractVerticle {
     if (StringUtil.isNullOrEmpty(query)) {
       results = new LinkedList<>();
     } else {
-      results = ArticleSearchService.instance()
+      results = SearchService.instance()
           .search(Parser.parse(query));
     }
     res.put("query", context.request().params().get("query"));
