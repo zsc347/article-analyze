@@ -1,11 +1,12 @@
 package com.scaiz.analyze;
 
-import com.scaiz.analyze.manager.DBManager;
-import com.scaiz.analyze.parser.Parser;
 import com.scaiz.analyze.pojo.Article;
 import com.scaiz.analyze.service.SearchService;
+import com.scaiz.analyze.spec.Query;
+import com.scaiz.analyze.spec.Query.QueryBuilder;
 import io.netty.util.internal.StringUtil;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.Json;
@@ -16,10 +17,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class ArticleVerticle extends AbstractVerticle {
 
-  private static int PORT = 8080;
+  private static int PORT = Integer.parseInt(
+      System.getProperty("PORT", "8080"));
   private static Vertx vertx;
 
   @Override
@@ -34,24 +37,38 @@ public class ArticleVerticle extends AbstractVerticle {
 
   private void search(RoutingContext context) {
     Map<String, Object> res = new HashMap<>();
-    String query = context.request().params().get("query");
+
+    MultiMap params = context.request().params();
+    String qStr = params.get("query");
+
     List<Article> results;
-    if (StringUtil.isNullOrEmpty(query)) {
+    if (StringUtil.isNullOrEmpty(qStr)) {
       results = new LinkedList<>();
     } else {
-      results = SearchService.instance()
-          .search(Parser.parse(query));
+      QueryBuilder builder = Query.builder();
+      builder.corpus(Optional.ofNullable(params.get("corpus"))
+          .orElse("tangshi"));
+      if (!StringUtil.isNullOrEmpty(params.get("from"))) {
+        builder.from(Integer.parseInt(params.get("from")));
+      } else {
+        builder.from(0);
+      }
+      if (!StringUtil.isNullOrEmpty(params.get("size"))) {
+        builder.size(Integer.parseInt(params.get("size")));
+      } else {
+        builder.size(10);
+      }
+      builder.query(qStr);
+      Query query = builder.build();
+      results = SearchService.instance().search(query);
     }
-    res.put("query", context.request().params().get("query"));
+    res.put("query", Optional.of(params.get("query")).orElse(""));
     res.put("results", results);
-    System.out.println(Json.encode(res));
-
     context.response().putHeader("content-type", "application/json");
     context.response().end(Json.encode(res));
   }
 
-  public static void main(String[] args) throws Exception {
-    DBManager.instance().load();
+  public static void main(String[] args) {
     vertx = Vertx.vertx();
     vertx.deployVerticle(new ArticleVerticle());
   }

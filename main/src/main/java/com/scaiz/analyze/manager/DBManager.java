@@ -9,19 +9,24 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 
+@Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class DBManager {
 
-  private List<Article> articles = new LinkedList<Article>();
+  private static ConcurrentMap<String, DBManager> cache = new ConcurrentHashMap<>();
 
+  private List<Article> articles = new LinkedList<>();
 
-  public void load() throws IOException {
+  private void load(String corpus) throws IOException {
     InputStream inputStream = DBManager.class.getClassLoader()
-        .getResourceAsStream("tangshi.txt");
+        .getResourceAsStream(corpus + ".txt");
     BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
     String str;
 
@@ -45,23 +50,25 @@ public class DBManager {
       }
       articles.add(builder.build());
     }
+  }
 
-    System.out.println(Json.encode(articles));
+
+  public static DBManager loadCorpus(String corpus) {
+    try {
+      DBManager manager = cache.get(corpus);
+      if (manager == null) {
+        manager = new DBManager();
+        manager.load(corpus);
+        cache.putIfAbsent(corpus, manager);
+      }
+      return manager;
+    } catch (IOException e) {
+      log.error("load corpus {} error", corpus, e);
+      return new DBManager();
+    }
   }
 
   public List<Article> getArticles() {
     return articles;
-  }
-
-  private static class DBManagerHolder {
-    private static DBManager instance = new DBManager();
-  }
-
-  public static DBManager instance() {
-    return DBManagerHolder.instance;
-  }
-
-  public static void main(String[] args) throws Exception {
-    DBManager.instance().load();
   }
 }
