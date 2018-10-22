@@ -5,12 +5,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.scaiz.analyze.manager.DBManager;
+import com.scaiz.analyze.pojo.Article;
 import com.scaiz.analyze.spec.CombineCondition;
 import com.scaiz.analyze.spec.Condition;
 import com.scaiz.analyze.spec.Operator;
 import com.scaiz.analyze.spec.PlainCondition;
-import io.vertx.core.json.Json;
+import com.scaiz.analyze.spec.Query;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +33,7 @@ public class SearchServiceTest {
     Condition con = new PlainCondition("");
     Set<Integer> rs = searchService.search(manager, con);
     assertNotNull(rs);
-    assertEquals(0, rs.size());
+    assertEquals(3, rs.size());
 
     con = new PlainCondition("bb");
     rs = searchService.search(manager, con);
@@ -47,7 +49,7 @@ public class SearchServiceTest {
     ));
     Set<Integer> rs = searchService.search(manager, or);
     assertEquals(2, rs.size());
-    assertTrue(rs.containsAll(Arrays.asList(1,3)));
+    assertTrue(rs.containsAll(Arrays.asList(1, 3)));
 
     Condition and = new CombineCondition(Operator.AND, Arrays.asList(
         new PlainCondition("aa"),
@@ -59,4 +61,14 @@ public class SearchServiceTest {
     assertTrue(rs.containsAll(Arrays.asList(1)));
   }
 
+  @Test
+  public void testQuery() {
+    List<Article> rs = searchService.search(Query.builder()
+        .corpus("test")
+        .query("[aa, cc]")
+        .from(0)
+        .size(100)
+        .build()).getResults();
+    assertEquals(3, rs.size());
+  }
 }

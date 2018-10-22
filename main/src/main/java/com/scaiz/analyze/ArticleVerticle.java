@@ -4,6 +4,7 @@ import com.scaiz.analyze.pojo.Article;
 import com.scaiz.analyze.service.SearchService;
 import com.scaiz.analyze.spec.Query;
 import com.scaiz.analyze.spec.Query.QueryBuilder;
+import com.scaiz.analyze.spec.QueryResult;
 import io.netty.util.internal.StringUtil;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.MultiMap;
@@ -13,6 +14,7 @@ import io.vertx.core.json.Json;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,15 +37,16 @@ public class ArticleVerticle extends AbstractVerticle {
   }
 
 
+  @SuppressWarnings("unchecked")
   private void search(RoutingContext context) {
     Map<String, Object> res = new HashMap<>();
 
     MultiMap params = context.request().params();
     String qStr = params.get("query");
 
-    List<Article> results;
+    QueryResult queryResult;
     if (StringUtil.isNullOrEmpty(qStr)) {
-      results = new LinkedList<>();
+      queryResult = new QueryResult(Collections.emptyList(), 0L);
     } else {
       QueryBuilder builder = Query.builder();
       builder.corpus(Optional.ofNullable(params.get("corpus"))
@@ -60,10 +63,10 @@ public class ArticleVerticle extends AbstractVerticle {
       }
       builder.query(qStr);
       Query query = builder.build();
-      results = SearchService.instance().search(query);
+      queryResult = SearchService.instance().search(query);
     }
     res.put("query", Optional.of(params.get("query")).orElse(""));
-    res.put("results", results);
+    res.putAll(Json.decodeValue(Json.encode(queryResult), Map.class));
     context.response().putHeader("content-type", "application/json");
     context.response().end(Json.encode(res));
   }

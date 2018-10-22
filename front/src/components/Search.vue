@@ -4,7 +4,7 @@
             v-model="input"
             placeholder="请输入查询"></el-input>
 
-            <div class="content-wrap" v-if="articlesSize > 0">
+            <div class="content-wrap" v-if="total > 0">
               <div class="hint-wrap">
                 <el-alert type="success" v-bind:title="hint" :closable="false"></el-alert>
               </div>
@@ -25,13 +25,11 @@ export default {
   },
   computed: {
     hint() {
-      return `共搜索到 ${this.articlesSize} 条结果`
-    },
-    articlesSize() {
-      return this.$store.state.articles.results.length;
+      return `共搜索到 ${this.total} 条结果`
     },
     ...mapState({
-      articles: state => state.articles.results
+      articles: state => state.articles.results,
+      total: state => state.articles.total
     })
   },
   watch: {

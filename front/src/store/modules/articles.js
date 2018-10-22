@@ -7,8 +7,9 @@ const state = {
 const getters = {};
 
 const mutations = {
-  setResults(state, results) {
-    state.results = results;
+  setResult(state, result) {
+    state.results = result.results;
+    state.total = result.total
   }
 };
 
@@ -16,7 +17,7 @@ const actions = {
   searchResults({ commit }, keyword) {
     article
       .searchArticles(keyword)
-      .then(response => commit("setResults", response.data.results))
+      .then(response => commit("setResult", response.data))
       .catch(err => commit("setResults", []));
   }
 };

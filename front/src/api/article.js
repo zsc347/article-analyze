@@ -20,7 +20,10 @@ export default {
   searchArticles(query) {
     return client.get("/api/search", {
       params: {
-        query: query
+        corpus: 'tangshi',
+        query: query,
+        from : 0,
+        size: 100
       }
     });
   }

@@ -7,6 +7,7 @@ import com.scaiz.analyze.spec.CombineCondition;
 import com.scaiz.analyze.spec.Condition;
 import com.scaiz.analyze.spec.PlainCondition;
 import com.scaiz.analyze.spec.Query;
+import com.scaiz.analyze.spec.QueryResult;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,15 +17,16 @@ import java.util.stream.Collectors;
 
 public class SearchService {
 
-  public List<Article> search(Query query) {
+  public QueryResult search(Query query) {
     DBManager manager = DBManager.loadCorpus(query.getCorpus());
     List<Integer> idList = new ArrayList<>(this.search(manager,
         Parser.parse(query.getQuery())));
     Collections.sort(idList);
-    return idList.stream()
-        .map(id -> manager.getArticles().get(id))
-        .collect(Collectors.toList())
-        .subList(query.getFrom(), query.getSize());
+    List<Article> all = idList.stream()
+        .map(id -> manager.getArticles().get(id - 1))
+        .collect(Collectors.toList());
+    return new QueryResult(all.subList(query.getFrom(),
+        Math.min(query.getFrom() + query.getSize(), all.size())), (long) all.size());
   }
 
   Set<Integer> search(DBManager manager, Condition condition) {
