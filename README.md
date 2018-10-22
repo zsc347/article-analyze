@@ -1,5 +1,7 @@
 # article-analyze
 
+### 功能说明
+
 简单的文献分析工具。
 
 包含三部分功能
@@ -19,3 +21,18 @@
 
 后台使用vertx，无数据库。前台使用Vue。
 
+### 编译
+
+```
+git clone git@github.com:zsc347/article-analyze.git
+cd article-analyze/front
+npm install
+npm run build
+cd ../main
+mvn clean package
+```
+
+### 运行
+```
+java -jar article-analyze-fat.jar
+```

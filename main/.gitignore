@@ -1,2 +1,5 @@
 *.class
+*.jar
 target/
+src/main/resources/webroot/
+.vertx/

@@ -1,6 +1,7 @@
 import article from "../../api/article";
 
 const state = {
+  total: 0,
   results: []
 };
 

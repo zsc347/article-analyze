@@ -6,11 +6,10 @@ const publicPath = ''
 
 module.exports = (options = {}) => ({
   entry: {
-    vendor: './src/vendor',
     index: './src/main.js'
   },
   output: {
-    path: resolve(__dirname, 'dist'),
+    path: resolve(__dirname, '../main/src/main/resources/webroot'),
     filename: options.dev ? '[name].js' : '[name].js?[chunkhash]',
     chunkFilename: '[id].js?[chunkhash]',
     publicPath: options.dev ? '/assets/' : publicPath
@@ -42,7 +41,7 @@ module.exports = (options = {}) => ({
   },
   plugins: [
     new webpack.optimize.CommonsChunkPlugin({
-      names: ['vendor', 'manifest']
+      names: ['manifest']
     }),
     new HtmlWebpackPlugin({
       template: 'src/index.html'
