@@ -1,6 +1,9 @@
 package com.scaiz.analyze.spec;
 
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Value;
 
@@ -39,5 +42,14 @@ public class CombineCondition extends Condition {
   @Override
   public int hashCode() {
     return this.toString().hashCode();
+  }
+
+  @Override
+  public List<String> keys() {
+    Set<String> keys = new HashSet<>();
+    for (Condition condition : conditions) {
+      keys.addAll(condition.keys());
+    }
+    return new LinkedList<>(keys);
   }
 }

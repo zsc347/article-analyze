@@ -1,9 +1,11 @@
 package com.scaiz.analyze.parser;
 
+import com.scaiz.analyze.service.SearchService;
 import com.scaiz.analyze.spec.CombineCondition;
 import com.scaiz.analyze.spec.Condition;
 import com.scaiz.analyze.spec.Operator;
 import com.scaiz.analyze.spec.PlainCondition;
+import com.scaiz.analyze.spec.Query;
 import io.netty.util.internal.StringUtil;
 import java.util.LinkedList;
 import java.util.Objects;
@@ -80,5 +82,15 @@ public class Parser {
       throw new ParseError("partial request: " + cur.toString());
     }
     return Optional.ofNullable(cur).orElse(new PlainCondition(""));
+  }
+
+  public static void main(String[] args) {
+    System.out.println(Parser.parse("[('蓮', '荷', '芙蓉', '鞭蓉', '蕖', '菡萏', '藕', '芬陀利', '水華', '水芝', '玉芝', '靈草', [('水宮', '凌波'), ('仙', '女')], '天仙花', '溪客', '靜客', '翠錢', '紅衣', '佛座須', '蕸', '翠蓋', '碧圓', '菂', '湖目', '藕', '靈根', '連菜'), ['青', '碧']]"));
+    SearchService.instance().search(Query.builder()
+        .corpus("tangshi")
+        .query("[('蓮', '荷', '芙蓉', '鞭蓉', '蕖', '菡萏', '藕', '芬陀利', '水華', '水芝', '玉芝', '靈草', [('水宮', '凌波'), ('仙', '女')], '天仙花', '溪客', '靜客', '翠錢', '紅衣', '佛座須', '蕸', '翠蓋', '碧圓', '菂', '湖目', '藕', '靈根', '連菜'), ['青', '碧']]")
+        .from(0)
+        .size(100)
+        .build());
   }
 }

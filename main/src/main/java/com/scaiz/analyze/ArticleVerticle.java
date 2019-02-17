@@ -17,6 +17,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
 
@@ -51,7 +52,7 @@ public class ArticleVerticle extends AbstractVerticle {
 
     QueryResult queryResult;
     if (StringUtil.isNullOrEmpty(qStr)) {
-      queryResult = new QueryResult(Collections.emptyList(), 0L);
+      queryResult = new QueryResult(Collections.emptyList(), Collections.emptyList(), 0L);
     } else {
       QueryBuilder builder = Query.builder();
       builder.corpus(Optional.ofNullable(params.get("corpus"))

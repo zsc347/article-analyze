@@ -1,5 +1,7 @@
 package com.scaiz.analyze.spec;
 
-public abstract class Condition {
+import java.util.List;
 
+public abstract class Condition {
+    public abstract List<String> keys();
 }

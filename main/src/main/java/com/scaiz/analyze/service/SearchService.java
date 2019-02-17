@@ -19,13 +19,17 @@ public class SearchService {
 
   public QueryResult search(Query query) {
     DBManager manager = DBManager.loadCorpus(query.getCorpus());
+
+    Condition con = Parser.parse(query.getQuery());
+    System.out.println("query: " + con);
     List<Integer> idList = new ArrayList<>(this.search(manager,
-        Parser.parse(query.getQuery())));
+        con));
     Collections.sort(idList);
     List<Article> all = idList.stream()
+        .sorted()
         .map(id -> manager.getArticles().get(id - 1))
         .collect(Collectors.toList());
-    return new QueryResult(all.subList(query.getFrom(),
+    return new QueryResult(con.keys(), all.subList(query.getFrom(),
         Math.min(query.getFrom() + query.getSize(), all.size())), (long) all.size());
   }
 
@@ -43,7 +47,7 @@ public class SearchService {
   private Set<Integer> searchPlain(DBManager manager, PlainCondition plain) {
     String word = plain.getWord();
     return manager.getArticles().parallelStream()
-        .filter(article -> article.getContent().contains(word))
+        .filter(article -> article.getContent().contains(word) || article.getTitle().contains(word))
         .map(Article::getId)
         .collect(Collectors.toSet());
   }

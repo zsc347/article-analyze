@@ -1,16 +1,19 @@
 <template>
-    <div class="search-wrap">
-        <el-input prefix-icon="el-icon-search" 
-            v-model="input"
-            placeholder="请输入查询"></el-input>
+  <div class="search-wrap">
+    <el-input prefix-icon="el-icon-search" v-model="input" placeholder="请输入查询"></el-input>
 
-            <div class="content-wrap" v-if="total > 0">
-              <div class="hint-wrap">
-                <el-alert type="success" v-bind:title="hint" :closable="false"></el-alert>
-              </div>
-              <Article v-for="article in articles" v-bind:article="article" :key=article.id></Article>
-        </div>
+    <div class="content-wrap" v-if="total > 0">
+      <div class="hint-wrap">
+        <el-alert type="success" v-bind:title="hint" :closable="false"></el-alert>
+      </div>
+      <Article
+        v-for="article in articles"
+        v-bind:keys="keys"
+        v-bind:article="article"
+        :key="article.id"
+      ></Article>
     </div>
+  </div>
 </template>
 
 <script>
@@ -25,10 +28,11 @@ export default {
   },
   computed: {
     hint() {
-      return `共搜索到 ${this.total} 条结果`
+      return `共搜索到 ${this.total} 条结果`;
     },
     ...mapState({
       articles: state => state.articles.results,
+      keys: state => state.articles.keys,
       total: state => state.articles.total
     })
   },

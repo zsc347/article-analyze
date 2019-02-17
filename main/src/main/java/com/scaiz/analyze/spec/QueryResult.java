@@ -8,6 +8,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class QueryResult {
+  List<String> keys;
   List<Article> results;
   Long total;
 }

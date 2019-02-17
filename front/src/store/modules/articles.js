@@ -2,6 +2,7 @@ import article from "../../api/article";
 
 const state = {
   total: 0,
+  keys: [],
   results: []
 };
 
@@ -10,7 +11,8 @@ const getters = {};
 const mutations = {
   setResult(state, result) {
     state.results = result.results;
-    state.total = result.total
+    state.total = result.total;
+    state.keys = result.keys;
   }
 };
 
@@ -19,7 +21,7 @@ const actions = {
     article
       .searchArticles(keyword)
       .then(response => commit("setResult", response.data))
-      .catch(err => commit("setResults", []));
+      .catch(err => commit("setResult", []));
   }
 };
 

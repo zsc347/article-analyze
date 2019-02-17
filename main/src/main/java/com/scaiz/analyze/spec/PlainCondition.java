@@ -1,5 +1,7 @@
 package com.scaiz.analyze.spec;
 
+import java.util.Collections;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,5 +29,10 @@ public class PlainCondition extends Condition {
   @Override
   public int hashCode() {
     return toString().hashCode();
+  }
+
+  @Override
+  public List<String> keys() {
+    return Collections.singletonList(word);
   }
 }
