@@ -15,13 +15,21 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 
+
+@Slf4j
 public class ArticleVerticle extends AbstractVerticle {
+
+  private static Pattern FilePattern = Pattern.compile("[\\\\/:*?\"<>|]");
 
   private static int PORT = Integer.parseInt(
       System.getProperty("PORT", "8080"));
@@ -31,11 +39,12 @@ public class ArticleVerticle extends AbstractVerticle {
     HttpServer httpServer = vertx.createHttpServer();
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
-    router.route(HttpMethod.GET,"/api/search").blockingHandler(this::search);
+    router.route(HttpMethod.GET, "/api/search").blockingHandler(this::search);
+    router.route(HttpMethod.GET, "/api/export").blockingHandler(this::download);
 
     router.route("/*").handler(StaticHandler.create());
     router.route("/*").handler(ctx -> {
-      if(!ctx.response().ended()) {
+      if (!ctx.response().ended()) {
         ctx.reroute("/");
       }
     });
@@ -43,14 +52,9 @@ public class ArticleVerticle extends AbstractVerticle {
   }
 
 
-  @SuppressWarnings("unchecked")
-  private void search(RoutingContext context) {
-    Map<String, Object> res = new HashMap<>();
-
-    MultiMap params = context.request().params();
-    String qStr = params.get("query");
-
+  private QueryResult query(MultiMap params) {
     QueryResult queryResult;
+    String qStr = params.get("query");
     if (StringUtil.isNullOrEmpty(qStr)) {
       queryResult = new QueryResult(Collections.emptyList(), Collections.emptyList(), 0L);
     } else {
@@ -71,11 +75,58 @@ public class ArticleVerticle extends AbstractVerticle {
       Query query = builder.build();
       queryResult = SearchService.instance().search(query);
     }
+    return queryResult;
+  }
+
+
+  private void download(RoutingContext context) {
+    Map<String, Object> res = new HashMap<>();
+
+    MultiMap params = context.request().params();
+
+    String qStr = Optional.ofNullable(params.get("query")).orElse("null");
+
+    log.info("export file name: {}", filterFilename(qStr));
+
+    QueryResult queryResult = query(params);
+
+    context.response().putHeader("Content-Type", "text/plain;charset=UTF-8");
+    context.response().putHeader("Transfer-Encoding", "chunked");
+
+    String encodeFilename;
+    try {
+      encodeFilename = URLEncoder.encode(filterFilename(qStr) + ".txt", StandardCharsets.UTF_8.toString());
+    } catch (Exception e) {
+      encodeFilename = "unknown.txt";
+    }
+
+    context.response().putHeader("Content-Disposition",
+        "attachment;filename*=UTF-8''"+ encodeFilename);
+
+    context.response().write("查询：" + params.get("query") + "\n");
+    context.response().write("共有 " + queryResult.getTotal() + " 条记录\n");
+    queryResult.getResults().forEach(result ->
+        context.response().write(String.join(" ", String.valueOf(result.getId()),
+            result.getTitle(), result.getAuthor(), result.getContent()) + "\n"));
+    context.response().end();
+  }
+
+  @SuppressWarnings("unchecked")
+  private void search(RoutingContext context) {
+    Map<String, Object> res = new HashMap<>();
+    MultiMap params = context.request().params();
+    QueryResult queryResult = query(params);
     res.put("query", Optional.of(params.get("query")).orElse(""));
     res.putAll(Json.decodeValue(Json.encode(queryResult), Map.class));
     context.response().putHeader("content-type", "application/json");
     context.response().end(Json.encode(res));
   }
+
+
+  private static String filterFilename(String str) {
+    return str == null ? "null" : FilePattern.matcher(str).replaceAll("");
+  }
+
 
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
