@@ -25,8 +25,8 @@ const actions = {
       .then(response => commit("setResult", response.data))
       .catch(err => commit("setResult", []));
   },
-  downloadResults({}, keyword) {
-    article.downloadArticles(keyword);
+  downloadResults({}, { query, filtered }) {
+    article.downloadArticles(query, filtered);
   },
   pageReset() {
     state.from = 0;

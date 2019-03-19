@@ -14,10 +14,11 @@
         </el-button-group>
       </el-row>
       <Article
-        v-for="article in articles"
+        v-for="article in filteredArticles"
         v-bind:keys="keys"
         v-bind:article="article"
         :key="article.id"
+        @removeArticle="recordRemove"
       ></Article>
     </div>
   </div>
@@ -30,18 +31,26 @@ import { mapState } from "vuex";
 export default {
   data() {
     return {
-      input: ""
+      input: "",
+      removed: []
     };
   },
   computed: {
     hint() {
-      return `共搜索到 ${this.total} 条结果，当前显示 ${this.start}-${
+      let removeStr =
+        this.removed.length > 0 ? `(排除 ${this.removed.length} 条结果)` : "";
+
+      return `共搜索到 ${this.total -
+        this.removed.length} 条结果 ${removeStr}，当前显示 ${this.start}-${
         this.end
       }`;
     },
+    filteredArticles() {
+      return this.articles.filter(a => this.removed.indexOf(a.id) === -1);
+    },
     ...mapState({
-      size: state => state.articles.size,
       articles: state => state.articles.results,
+      size: state => state.articles.size,
       keys: state => state.articles.keys,
       total: state => state.articles.total,
       hasPrev: state => state.articles.from > 0,
@@ -63,11 +72,18 @@ export default {
       this.$store.dispatch("articles/searchResults", this.input);
     },
     download() {
-      this.$store.dispatch("articles/downloadResults", this.input);
+      this.$store.dispatch("articles/downloadResults", {
+        query: this.input,
+        filtered: this.removed
+      });
+    },
+    recordRemove(id) {
+      this.removed.push(id);
     }
   },
   watch: {
     input: function(val) {
+      this.removed = [];
       this.$store.dispatch("articles/pageReset");
       this.$store.dispatch("articles/searchResults", val);
     }
@@ -81,6 +97,8 @@ export default {
 <style scoped>
 .search-wrap {
   padding: 2rem;
+  width: 80%;
+  margin: auto;
 }
 
 .hint-wrap {

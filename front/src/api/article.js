@@ -13,9 +13,10 @@ export default {
       }
     });
   },
-  downloadArticles(query) {
-    var a = document.createElement("a");
-    a.href = `/api/export?corpus=tangshi&query=${query}&from=0&size=2147483647`;
+  downloadArticles(query, filtered) {
+    let encodeFiltered = encodeURI(filtered);
+    let a = document.createElement("a");
+    a.href = `/api/export?corpus=tangshi&query=${query}&from=0&size=2147483647&filtered=${encodeFiltered}`;
     a.click();
   }
 };

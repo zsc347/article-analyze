@@ -1,6 +1,22 @@
 <template>
-  <el-card class="box-card article-card">
-    <h2 class="title" v-html="formattedTitle"></h2>
+  <el-card
+    class="box-card article-card"
+    @mouseenter.native="mouseEnter"
+    @mouseleave.native="mouseLeave"
+  >
+    <el-row>
+      <el-col :span="18">
+        <h2 class="title" v-html="formattedTitle"></h2>
+      </el-col>
+      <el-col :span="6" type="flex" justify="end">
+        <div class="tools-container" v-if="showTools">
+          <el-tooltip class="item" effect="dark" content="删除" placement="top">
+            <el-button icon="el-icon-delete" circle size="mini" @click="remove"></el-button>
+          </el-tooltip>
+        </div>
+      </el-col>
+    </el-row>
+
     <p class="author">{{article.author}}</p>
     <div v-html="formattedContent"></div>
     <el-row>
@@ -50,6 +66,11 @@ function highlight(content, keys) {
 
 export default {
   props: ["article", "keys"],
+  data() {
+    return {
+      showTools: false
+    };
+  },
   computed: {
     matched() {
       let uniqed = uniq(this.keys);
@@ -70,6 +91,17 @@ export default {
         .map(line => highlight(trim(line), this.matched) + "。")
         .join("<br>");
     }
+  },
+  methods: {
+    mouseEnter() {
+      this.showTools = true;
+    },
+    mouseLeave() {
+      this.showTools = false;
+    },
+    remove() {
+      this.$emit("removeArticle", this.article.id);
+    }
   }
 };
 </script>
@@ -83,5 +115,10 @@ export default {
 }
 .article-card {
   margin: 1rem auto;
+}
+
+.tools-container {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

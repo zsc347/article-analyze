@@ -1,5 +1,6 @@
 package com.scaiz.analyze;
 
+import com.scaiz.analyze.pojo.Article;
 import com.scaiz.analyze.service.SearchService;
 import com.scaiz.analyze.spec.Query;
 import com.scaiz.analyze.spec.Query.QueryBuilder;
@@ -17,12 +18,16 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -80,12 +85,8 @@ public class ArticleVerticle extends AbstractVerticle {
 
 
   private void download(RoutingContext context) {
-    Map<String, Object> res = new HashMap<>();
-
     MultiMap params = context.request().params();
-
     String qStr = Optional.ofNullable(params.get("query")).orElse("null");
-
     log.info("export file name: {}", filterFilename(qStr));
 
     QueryResult queryResult = query(params);
@@ -104,11 +105,46 @@ public class ArticleVerticle extends AbstractVerticle {
         "attachment;filename*=UTF-8''"+ encodeFilename);
 
     context.response().write("查询：" + params.get("query") + "\n");
-    context.response().write("共有 " + queryResult.getTotal() + " 条记录\n");
+
+
+    String filtered = params.get("filtered");
+    Set<Integer> filterSet;
+    if (!StringUtil.isNullOrEmpty(filtered)) {
+      filterSet = Arrays.stream(filtered.split(","))
+          .map(Integer::valueOf)
+          .collect(Collectors.toSet());
+    } else {
+      filterSet = Collections.emptySet();
+    }
+
+    List<Article> cleanList = queryResult.getResults()
+        .stream()
+        .filter(a -> !filterSet.contains(a.getId()))
+        .collect(Collectors.toList());
+    context.response().write("共有 " + cleanList.size() + " 条记录\n");
     queryResult.getResults().forEach(result ->
-        context.response().write(String.join(" ", String.valueOf(result.getId()),
-            result.getTitle(), result.getAuthor(), result.getContent()) + "\n"));
+        context.response().write(articleLine(result)));
+
+
+    List<Article> removedList = queryResult.getResults()
+        .stream()
+        .filter(a -> filterSet.contains(a.getId()))
+        .collect(Collectors.toList());
+    if (removedList.size() > 0) {
+      context.response().write("\n\n\n");
+      context.response().write("过滤掉 " + removedList.size() + " 条记录\n");
+      removedList.forEach(result -> context.response().write(articleLine(result)));
+    }
     context.response().end();
+  }
+
+
+  private String articleLine(Article article) {
+    return String.join(" ",
+        String.valueOf(article.getId()),
+        article.getTitle(),
+        article.getAuthor(),
+        article.getContent()) + "\n";
   }
 
   @SuppressWarnings("unchecked")
