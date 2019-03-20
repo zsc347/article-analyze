@@ -1,5 +1,6 @@
 package com.scaiz.analyze.service;
 
+import com.scaiz.analyze.manager.CacheManager;
 import com.scaiz.analyze.manager.DBManager;
 import com.scaiz.analyze.parser.Parser;
 import com.scaiz.analyze.pojo.Article;
@@ -8,29 +9,48 @@ import com.scaiz.analyze.spec.Condition;
 import com.scaiz.analyze.spec.PlainCondition;
 import com.scaiz.analyze.spec.Query;
 import com.scaiz.analyze.spec.QueryResult;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
+
+@Slf4j
 public class SearchService {
 
-  public QueryResult search(Query query) {
-    DBManager manager = DBManager.loadCorpus(query.getCorpus());
+  private CacheManager keyCache = new CacheManager();
+  private CacheManager queryCache = new CacheManager(10);
 
+  public QueryResult search(Query query) {
+    long start = System.nanoTime();
+
+    DBManager manager = DBManager.loadCorpus(query.getCorpus());
     Condition con = Parser.parse(query.getQuery());
-    System.out.println("query: " + con);
-    List<Integer> idList = new ArrayList<>(this.search(manager,
-        con));
-    Collections.sort(idList);
-    List<Article> all = idList.stream()
+
+    List<Integer> idList;
+    if (queryCache.exists(con.toString())) {
+      idList = queryCache.get(con.toString());
+    } else {
+      idList = new ArrayList<>(this.search(manager,
+          con));
+      Collections.sort(idList);
+    }
+    queryCache.put(con.toString(), idList);
+
+    List<Integer> range = idList.subList(query.getFrom(),
+        Math.min(query.getFrom() + query.getSize(), idList.size()));
+
+    List<Article> rs = range.stream()
         .sorted()
         .map(id -> manager.getArticles().get(id - 1))
         .collect(Collectors.toList());
-    return new QueryResult(con.keys(), all.subList(query.getFrom(),
-        Math.min(query.getFrom() + query.getSize(), all.size())), (long) all.size());
+
+    log.info("query {} takes {} ms ", con.toString(), (System.nanoTime() - start)/1000000);
+    return  new QueryResult(con.keys(), rs, (long) idList.size());
   }
 
   Set<Integer> search(DBManager manager, Condition condition) {
@@ -46,10 +66,15 @@ public class SearchService {
 
   private Set<Integer> searchPlain(DBManager manager, PlainCondition plain) {
     String word = plain.getWord();
-    return manager.getArticles().parallelStream()
+    if (keyCache.exists(word)) {
+      return keyCache.get(word);
+    }
+    Set<Integer> rs = manager.getArticles().parallelStream()
         .filter(article -> article.getContent().contains(word) || article.getTitle().contains(word))
         .map(Article::getId)
         .collect(Collectors.toSet());
+    keyCache.put(word, rs);
+    return rs;
   }
 
   private Set<Integer> searchCombine(DBManager manager, CombineCondition condition) {
