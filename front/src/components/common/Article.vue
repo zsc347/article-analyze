@@ -1,6 +1,6 @@
 <template>
   <el-card
-    class="box-card article-card"
+    class="box-card article-card paper-bg"
     @mouseenter.native="mouseEnter"
     @mouseleave.native="mouseLeave"
   >

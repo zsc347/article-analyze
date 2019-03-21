@@ -19,8 +19,12 @@
         </el-col>
         <el-col :span="12">
           <el-row type="flex" justify="end">
-            <el-button @click="download" icon="el-icon-download" v-if="total > 0" circle></el-button>
-            <StarButton @starState="addState"></StarButton>
+            <el-tooltip class="item" effect="dark" content="导出" placement="bottom">
+              <el-button @click="download" icon="el-icon-download" v-if="total > 0" circle></el-button>
+            </el-tooltip>
+            <el-tooltip class="item" effect="dark" content="收藏" placement="bottom">
+              <StarButton @starState="addState"></StarButton>
+            </el-tooltip>
           </el-row>
         </el-col>
       </el-row>
@@ -160,5 +164,8 @@ export default {
 
 .hint-wrap {
   margin: 2rem auto;
+}
+
+.empty-background {
 }
 </style>
