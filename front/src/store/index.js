@@ -1,11 +1,13 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
-import articles from './modules/articles'
+import Vue from "vue";
+import Vuex from "vuex";
+import articles from "./modules/articles";
+import history from "./modules/history";
 
-Vue.use(Vuex)
+Vue.use(Vuex);
 
 export default new Vuex.Store({
-    modules: {
-        articles
-    }
-})
+  modules: {
+    articles,
+    history
+  }
+});
