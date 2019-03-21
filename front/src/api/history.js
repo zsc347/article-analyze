@@ -1,23 +1,22 @@
 import axios from "axios";
 
 const client = axios.create();
-let id = 1;
 
 export default {
   delState(id) {
-    return Promise.resolve(id);
+    console.log("api del", id);
+    return client.delete(`/api/history/${id}`).then(rsp => rsp.data);
   },
   storeState(title, query, filtered) {
-    console.log("store state", title, query, filtered);
-    return Promise.resolve({
-      id: ++id,
+    let s = {
       title: title,
       query: query,
       filtered: filtered.slice(0)
-    });
+    };
+    console.log("api store", s);
+    return client.put("/api/history", s).then(rsp => rsp.data);
   },
   fetchAllState() {
-    console.log("fecth all state");
-    return Promise.resolve([]);
+    return client.get("/api/history").then(rsp => rsp.data);
   }
 };

@@ -38,7 +38,7 @@ export default {
     handleLoad(row) {
       this.$emit("loadState", row);
     },
-    handleDelete(param) {
+    handleDelete(row) {
       this.$emit("removeState", row);
     }
   },

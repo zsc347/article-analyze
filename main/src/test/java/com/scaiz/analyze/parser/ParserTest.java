@@ -9,8 +9,8 @@ public class ParserTest {
 
 
   @Test
-  public void testNPE() {
-    TestUtils.assertNullPointerException(() -> Parser.parse(null));
+  public void testInvalidQuery() {
+    TestUtils.assertParseException(() -> Parser.parse(null));
   }
 
   @Test

@@ -1,6 +1,8 @@
 package com.scaiz.analyze;
 
 import com.scaiz.analyze.pojo.Article;
+import com.scaiz.analyze.pojo.History;
+import com.scaiz.analyze.service.HistoryService;
 import com.scaiz.analyze.service.SearchService;
 import com.scaiz.analyze.spec.Query;
 import com.scaiz.analyze.spec.Query.QueryBuilder;
@@ -18,10 +20,10 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,6 +49,13 @@ public class ArticleVerticle extends AbstractVerticle {
     router.route(HttpMethod.GET, "/api/search").blockingHandler(this::search);
     router.route(HttpMethod.GET, "/api/export").blockingHandler(this::download);
 
+    router.route(HttpMethod.DELETE, "/api/history/:id")
+        .blockingHandler(this::deleteHistory);
+    router.route(HttpMethod.PUT, "/api/history")
+        .blockingHandler(this::addHistory);
+    router.route(HttpMethod.GET, "/api/history")
+        .blockingHandler(this::fetchAllHistory);
+
     router.route("/*").handler(StaticHandler.create());
     router.route("/*").handler(ctx -> {
       if (!ctx.response().ended()) {
@@ -54,6 +63,32 @@ public class ArticleVerticle extends AbstractVerticle {
       }
     });
     httpServer.requestHandler(router::accept).listen(PORT);
+  }
+
+  private void fetchAllHistory(RoutingContext context) {
+    List<History> all = HistoryService.instance().loadAll();
+    context.response().putHeader("content-type", "application/json");
+    log.debug("fetch history {}", all);
+    context.response().end(Json.encode(all));
+  }
+
+  private void addHistory(RoutingContext context) {
+    History history = Json.decodeValue(context.getBody(), History.class);
+    history.setEpochTime(Instant.now().toEpochMilli());
+    HistoryService.instance().save(history);
+    log.debug("add history {}", history);
+    context.response().end(Json.encode(history));
+  }
+
+  private void deleteHistory(RoutingContext context) {
+    String idStr = context.pathParam("id");
+    if (StringUtil.isNullOrEmpty(idStr)) {
+      throw new IllegalStateException("param id not provided");
+    }
+    long id = Long.parseLong(idStr);
+    log.debug("del history", id);
+    boolean rs =  HistoryService.instance().remove(id);
+    context.response().end(String.valueOf(rs));
   }
 
 
@@ -165,6 +200,7 @@ public class ArticleVerticle extends AbstractVerticle {
 
 
   public static void main(String[] args) {
+    log.info("working folder: ", System.getProperty("user.dir"));
     Vertx vertx = Vertx.vertx();
     vertx.deployVerticle(new ArticleVerticle());
   }

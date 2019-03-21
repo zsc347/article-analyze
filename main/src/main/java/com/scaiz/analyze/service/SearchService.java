@@ -29,6 +29,7 @@ public class SearchService {
     long start = System.nanoTime();
 
     DBManager manager = DBManager.loadCorpus(query.getCorpus());
+
     Condition con = Parser.parse(query.getQuery());
 
     List<Integer> idList;
